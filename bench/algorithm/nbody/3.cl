@@ -108,89 +108,89 @@
 ;; Force magnitudes are stores in array magnitude
 (defun advance (system n)
   (declare (type list system)
-	   (type fixnum n))
+	         (type fixnum n))
   (let ((position_Deltas-x (make-array +ROUNDED_INTERACTIONS_COUNT+
-			 :element-type 'double-float :initial-element 1.0d0))
-	(position_Deltas-y (make-array +ROUNDED_INTERACTIONS_COUNT+
-			 :element-type 'double-float :initial-element 1.0d0))
-	(position_Deltas-z (make-array +ROUNDED_INTERACTIONS_COUNT+
-			 :element-type 'double-float :initial-element 1.0d0))
+			                                 :element-type 'double-float :initial-element 1.0d0))
+	      (position_Deltas-y (make-array +ROUNDED_INTERACTIONS_COUNT+
+			                                 :element-type 'double-float :initial-element 1.0d0))
+	      (position_Deltas-z (make-array +ROUNDED_INTERACTIONS_COUNT+
+			                                 :element-type 'double-float :initial-element 1.0d0))
         (magnitudes (make-array +ROUNDED_INTERACTIONS_COUNT+
-			 :element-type 'double-float :initial-element 1.0d0)))
+			                          :element-type 'double-float :initial-element 1.0d0)))
     (flet ((position-deltas ()
-	     ;; Calculate the position_Deltas between the bodies for each
-	     ;; interaction.
-	     (loop with i of-type fixnum = 0 for (a . rest) on system 
-		   do (dolist (b rest)
-			;; (declare (type position_deltas pdx pdy pdz))
-			(setf (aref position_Deltas-x i) (- (x a) (x b))
-			      (aref position_Deltas-y i) (- (y a) (y b))
-			      (aref position_Deltas-z i) (- (z a) (z b)))
-			(incf i))))
-	   (force-magnitudes ()
-	     ;; Calculate the magnitudes of force between the bodies for each
-	     ;; interaction. This loop processes two interactions at a time
-	     ;; which is why ROUNDED_INTERACTIONS_COUNT/2 iterations are done.
-	     (loop for i of-type fixnum below +ROUNDED_INTERACTIONS_COUNT+ by 4
-		   do (let* ((pdx (f64.4-aref position_Deltas-x i))
-			     (pdy (f64.4-aref position_Deltas-y i))
-			     (pdz (f64.4-aref position_Deltas-z i))
-			     (distance_Squared (f64.4+ (f64.4* pdx pdx)
+	           ;; Calculate the position_Deltas between the bodies for each
+	           ;; interaction.
+	           (loop with i of-type fixnum = 0 for (a . rest) on system 
+		               do (dolist (b rest)
+			                  ;; (declare (type position_deltas pdx pdy pdz))
+			                  (setf (aref position_Deltas-x i) (- (x a) (x b))
+			                        (aref position_Deltas-y i) (- (y a) (y b))
+			                        (aref position_Deltas-z i) (- (z a) (z b)))
+			                  (incf i))))
+	         (force-magnitudes ()
+	           ;; Calculate the magnitudes of force between the bodies for each
+	           ;; interaction. This loop processes two interactions at a time
+	           ;; which is why ROUNDED_INTERACTIONS_COUNT/2 iterations are done.
+	           (loop for i of-type fixnum below +ROUNDED_INTERACTIONS_COUNT+ by 4
+		               do (let* ((pdx (f64.4-aref position_Deltas-x i))
+			                       (pdy (f64.4-aref position_Deltas-y i))
+			                       (pdz (f64.4-aref position_Deltas-z i))
+			                       (distance_Squared (f64.4+ (f64.4* pdx pdx)
                                                        (f64.4* pdy pdy)
-						       (f64.4* pdz pdz)))
-			     (magnitude (f64.4/ (f64.4* (f64.4-sqrt distance_Squared)
-						        distance_Squared))))
-			(setf (f64.4-aref magnitudes i) magnitude)))
+						                                           (f64.4* pdz pdz)))
+			                       (magnitude (f64.4/ (f64.4* (f64.4-sqrt distance_Squared)
+						                                            distance_Squared))))
+			                  (setf (f64.4-aref magnitudes i) magnitude)))
              (vzeroupper))
-	   (velocities ()
-	     ;; Use the calculated magnitudes of force to update the velocities
-	     ;; for all of the bodies.
-	     (loop with i of-type fixnum = 0 for (a . rest) on system
-		   do (dolist (b rest)
-			(let* ((pdx-i (aref position_Deltas-x i))
-			       (pdy-i (aref position_Deltas-y i))
-			       (pdz-i (aref position_Deltas-z i))
-			       (mag-i (aref magnitudes i))
-			       ;; Precompute products of mass and magnitude
-			       ;; to be reused a couple of times
-			       (mass*mag-a (* (mass a) mag-i))  
-			       (mass*mag-b (* (mass b) mag-i)))
-			  (decf (vx a) (* pdx-i mass*mag-b)) 
-			  (decf (vy a) (* pdy-i mass*mag-b))
-			  (decf (vz a) (* pdz-i mass*mag-b))
-			  (incf (vx b) (* pdx-i mass*mag-a))
-			  (incf (vy b) (* pdy-i mass*mag-a)) 
-			  (incf (vz b) (* pdz-i mass*mag-a)))	               
-			(incf i))))
-	   (positions ()
-	     ;; Use the updated velocities to update the positions for all
-	     ;; bodies.
-	     (dolist (a system)
-	       (incf (x a) (vx a))
-	       (incf (y a) (vy a))
-	       (incf (z a) (vz a)))))
+	         (velocities ()
+	           ;; Use the calculated magnitudes of force to update the velocities
+	           ;; for all of the bodies.
+	           (loop with i of-type fixnum = 0 for (a . rest) on system
+		               do (dolist (b rest)
+			                  (let* ((pdx-i (aref position_Deltas-x i))
+			                         (pdy-i (aref position_Deltas-y i))
+			                         (pdz-i (aref position_Deltas-z i))
+			                         (mag-i (aref magnitudes i))
+			                         ;; Precompute products of mass and magnitude
+			                         ;; to be reused a couple of times
+			                         (mass*mag-a (* (mass a) mag-i))
+			                         (mass*mag-b (* (mass b) mag-i)))
+			                    (decf (vx a) (* pdx-i mass*mag-b))
+			                    (decf (vy a) (* pdy-i mass*mag-b))
+			                    (decf (vz a) (* pdz-i mass*mag-b))
+			                    (incf (vx b) (* pdx-i mass*mag-a))
+			                    (incf (vy b) (* pdy-i mass*mag-a))
+			                    (incf (vz b) (* pdz-i mass*mag-a)))
+			                  (incf i))))
+	         (positions ()
+	           ;; Use the updated velocities to update the positions for all
+	           ;; bodies.
+	           (dolist (a system)
+	             (incf (x a) (vx a))
+	             (incf (y a) (vy a))
+	             (incf (z a) (vz a)))))
       (declare (inline position-deltas force-magnitudes velocities positions))
       (loop repeat n do (progn (position-deltas) (force-magnitudes)
-			       (velocities) (positions))))))
+			                         (velocities) (positions))))))
 
 ;; Output the total energy of the system.
 (defun output_Energy (system)
-    (let ((e 0.0d0))
-      (declare (type double-float e))
-      (loop for (a . rest) on system do
-	;; Add the kinetic energy for each body.
-        (incf e (* 0.5d0 (mass a)
-                   (+ (* (vx a) (vx a))
-                      (* (vy a) (vy a))
-                      (* (vz a) (vz a)))))
-        (dolist (b rest)
-	  ;; Add the potential energy between this body and every other bodies
-          (let* ((dx (- (x a) (x b)))
-                 (dy (- (y a) (y b)))
-                 (dz (- (z a) (z b)))
-                 (dist (sqrt (+ (* dx dx) (* dy dy) (* dz dz)))))
-            (decf e (/ (the double-float (* (mass a) (mass b))) dist)))))
-      (format t "~,9f~%" e))) ;; Output the total energy of the system.
+  (let ((e 0.0d0))
+    (declare (type double-float e))
+    (loop for (a . rest) on system do
+	    ;; Add the kinetic energy for each body.
+      (incf e (* 0.5d0 (mass a)
+                 (+ (* (vx a) (vx a))
+                    (* (vy a) (vy a))
+                    (* (vz a) (vz a)))))
+      (dolist (b rest)
+	      ;; Add the potential energy between this body and every other bodies
+        (let* ((dx (- (x a) (x b)))
+               (dy (- (y a) (y b)))
+               (dz (- (z a) (z b)))
+               (dist (sqrt (+ (* dx dx) (* dy dy) (* dz dz)))))
+          (decf e (/ (the double-float (* (mass a) (mass b))) dist)))))
+    (format t "~,9f~%" e))) ;; Output the total energy of the system.
 
 ;; Calculate the momentum of each body and conserve momentum of the system by
 ;; adding to the Sun's velocity the appropriate opposite velocity needed in

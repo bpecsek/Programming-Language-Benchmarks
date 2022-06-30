@@ -84,7 +84,7 @@
 (declaim (ftype (function (f64.4 f64.4) f64) dot)
          (inline dot length-sq length_))
 (defun dot (a b)
-  (f64.4-hsum (f64.4* a b)))
+  (f64.4-horizontal+ (f64.4* a b)))
 
 (declaim (ftype (function (f64.4) f64) length-sq  length_))
 (defun length-sq (a)
@@ -112,23 +112,23 @@
 (declaim (ftype (function (list u32) null) advance))
 (defun advance (system n)
   (loop repeat n do
-    (loop for (bi . rest) on system do
-      (dolist (bj rest)
-        (let* ((pd  (f64.4- (pos bi) (pos bj)))
-               (dsq (f64.4  (length-sq pd)))
-               (dst (f64.4-sqrt dsq))
-               (mag (f64.4/ (f64.4* dsq dst)))
-               (pd-mag (f64.4* pd mag)))
-          (f64.4-decf (vel bi) (f64.4* pd-mag (mass bj)))
-          (f64.4-incf (vel bj) (f64.4* pd-mag (mass bi))))))
-    (loop for b in system do
-      (f64.4-incf (pos b) (vel b)))))
+    (loop for (bi . rest) on system
+          do (dolist (bj rest)
+               (let* ((pd  (f64.4- (pos bi) (pos bj)))
+                      (dsq (f64.4  (length-sq pd)))
+                      (dst (f64.4-sqrt dsq))
+                      (mag (f64.4/ (f64.4* dsq dst)))
+                      (pd-mag (f64.4* pd mag)))
+                 (f64.4-decf (vel bi) (f64.4* pd-mag (mass bj)))
+                 (f64.4-incf (vel bj) (f64.4* pd-mag (mass bi))))))
+    (loop for b in system
+          do (f64.4-incf (pos b) (vel b)))))
 
 ;; Output the total energy of the system.
 (declaim (ftype (function (list) null) energy))
 (defun energy (system)
   (loop for (bi . rest) on system
-	with e of-type f64 = 0d0
+	      with e of-type f64 = 0d0
           ;; Add the kinetic energy for each body.
         do (incf e (f64* 0.5d0 (mass bi) (length-sq (vel bi))))
            (dolist (bj rest)
@@ -153,12 +153,13 @@
 (declaim (ftype (function (u32) null) nbody))
 (defun nbody (n-times)
   (let ((system *system*))
-    (offset-momentum system)         
+    (offset-momentum system)
     (energy system)                     ;; Output initial energy of the system
     (scale-bodies system +DT+)          ;; Scale bodies to use unity time step
     (advance system n-times)            ;; Advance system n times
     (scale-bodies system +RECIP-DT+)    ;; Rescale bodies back to original
     (energy system)))                   ;; Output final energy of the system
+
 
 (defun main (&optional n-supplied)
   (let ((n (or n-supplied (parse-integer (or (car (last #+sbcl sb-ext:*posix-argv*))
