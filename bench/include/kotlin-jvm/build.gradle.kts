@@ -3,7 +3,7 @@ import org.jetbrains.kotlin.cli.jvm.K2JVMCompiler
 import org.jetbrains.kotlin.config.KotlinCompilerVersion
 
 plugins {
-    val kotlinVersion = "1.7.0"
+    val kotlinVersion = "1.7.10"
     kotlin("jvm").version(kotlinVersion)
     kotlin("plugin.serialization").version(kotlinVersion)
     // kotlin("plugin.spring").version(kotlinVersion)
@@ -31,7 +31,7 @@ dependencies {
     // implementation("org.slf4j:slf4j-api:1.7.36")
     implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.6.3")
     implementation("org.jetbrains.kotlinx:kotlinx-serialization-json:1.3.3")
-    val ktor_version = "2.0.2"
+    val ktor_version = "2.0.3"
     implementation("io.ktor:ktor-server-core:$ktor_version")
     // implementation("io.ktor:ktor-server-netty:$ktor_version")
     implementation("io.ktor:ktor-server-cio:$ktor_version")
