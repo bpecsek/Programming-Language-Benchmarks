@@ -4,8 +4,7 @@ const Allocator = std.mem.Allocator;
 const HashMap = std.HashMap;
 const AutoContext = std.hash_map.AutoContext;
 
-var gpa = std.heap.GeneralPurposeAllocator(.{}){};
-var global_allocator = gpa.allocator();
+const global_allocator = std.heap.c_allocator;
 
 pub fn main() !void {
     const stdout = std.io.getStdOut().writer();
@@ -54,7 +53,7 @@ const LCG = struct {
         const A: u32 = comptime 1103515245;
         const C: u32 = comptime 12345;
         const M: u32 = comptime 1 << 31;
-        self.seed = (A * self.seed + C) % M;
+        self.seed = (A *% self.seed +% C) % M;
         return self.seed;
     }
 };
@@ -76,7 +75,7 @@ fn LinkedList(comptime T: type) type {
 
         pub fn init(allocator: Allocator) !*Self {
             var list = try allocator.create(Self);
-            list.allocator = allocator;
+            list.* = .{ .allocator = allocator };
             return list;
         }
 
@@ -92,7 +91,7 @@ fn LinkedList(comptime T: type) type {
 
         pub fn add(self: *Self, data: T) !*Node {
             var node = try self.allocator.create(Node);
-            node.data = data;
+            node.* = .{ .data = data };
             self.__add_node(node);
             self.len += 1;
             return node;
@@ -156,11 +155,13 @@ fn LRU(
 
         pub fn init(size: u32, allocator: Allocator) !*Self {
             var lru = try allocator.create(Self);
-            lru.allocator = allocator;
-            lru.size = size;
-            lru.keys = MapType.init(allocator);
+            lru.* = .{
+                .allocator = allocator,
+                .size = size,
+                .keys = MapType.init(allocator),
+                .entries = try ListType.init(allocator),
+            };
             try lru.keys.ensureTotalCapacity(size);
-            lru.entries = try ListType.init(allocator);
             return lru;
         }
 

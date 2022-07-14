@@ -4,8 +4,7 @@ const math = std.math;
 const Allocator = std.mem.Allocator;
 const MIN_DEPTH = 4;
 
-var gpa = std.heap.GeneralPurposeAllocator(.{}){};
-var global_allocator = gpa.allocator();
+const global_allocator = std.heap.c_allocator;
 
 pub fn main() !void {
     const stdout = std.io.getStdOut().writer();
@@ -53,7 +52,7 @@ const Node = struct {
 
     pub fn init(allocator: Allocator) !*Self {
         var node = try allocator.create(Self);
-        node.allocator = allocator;
+        node.* = .{ .allocator = allocator };
         return node;
     }
 
