@@ -1,5 +1,6 @@
 #!/usr/bin/sh
 sudo apt install -y sbcl
+sudo apt install libzstd-dev
 sbcl --version
 git clone https://github.com/sbcl/sbcl $HOME/sbcl
 cd $HOME/sbcl
