@@ -25,7 +25,7 @@ jobs:
             d,
             dart,
             # elixir,
-            fortran,
+            # fortran,
             go,
             #hacklang,
             # haskell,
