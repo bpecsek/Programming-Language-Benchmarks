@@ -9,6 +9,10 @@ problems:
   - name: nbody
     source:
       - 2.f90
+  - name: nsieve
+    source:
+      - 1.f90
+
   # - name: pidigits
   #   source:
   #     - 4.f90
